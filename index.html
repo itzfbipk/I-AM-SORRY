@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>For Eliza</title>
+<style>
+/* ============================================================
+   RESET & ROOT VARIABLES
+   ============================================================ */
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --dark-brown:   #1a0f0a;
+  --mid-brown:    #2e1a0e;
+  --warm-grey:    #6b5c52;
+  --soft-beige:   #e8d9c8;
+  --gold:         #c9a85c;
+  --gold-light:   #e6c97a;
+  --gold-pale:    #f5e9cc;
+  --white:        #ffffff;
+  --cream:        #fdf6ed;
+
+  --font-display: 'Georgia', 'Times New Roman', serif;
+  --font-body:    'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --font-mono:    'Courier New', monospace;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--dark-brown);
+  color: var(--white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ============================================================
+   CANVAS — STARS + PARTICLES
+   ============================================================ */
+#canvas {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   GLOBAL LAYOUT
+   ============================================================ */
+.page-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  position: relative;
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.label {
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+h1.hero {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+h2.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.sub {
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  color: var(--soft-beige);
+  opacity: 0.7;
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-top: 14px;
+}
+
+.gold-line {
+  width: 60px; height: 1px;
+  background: var(--gold);
+  margin: 32px auto;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   ANIMATE-IN UTILITIES
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.9s cubic-bezier(.22,1,.36,1),
+              transform 0.9s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+.btn {
+  display: inline-block;
+  margin-top: 48px;
+  padding: 16px 44px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold-light);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.4s ease;
+}
+.btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--gold);
+  transform: translateX(-101%);
+  transition: transform 0.45s cubic-bezier(.22,1,.36,1);
+  z-index: -1;
+}
+.btn:hover { color: var(--dark-brown); }
+.btn:hover::before { transform: translateX(0); }
+.btn:active { transform: scale(0.97); }
+
+/* ============================================================
+   SECTION 1 — HERO
+   ============================================================ */
+#s1 { position: relative; }
+
+.hero-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.6;
+  margin-bottom: 24px;
+}
+
+.hero-sub {
+  margin-top: 20px;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  color: var(--soft-beige);
+  opacity: 0;
+  letter-spacing: 0.12em;
+  text-align: center;
+  animation: fadeIn 1.2s 1.4s forwards;
+}
+
+.hero-btn-wrap {
+  opacity: 0;
+  animation: fadeIn 1s 2.2s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* ============================================================
+   SECTION 2 — TYPEWRITER
+   ============================================================ */
+#s2 {
+  background: linear-gradient(180deg, transparent 0%, rgba(46,26,14,0.4) 100%);
+}
+
+.typewriter-container {
+  max-width: 640px;
+  text-align: center;
+}
+
+.typewriter-line {
+  display: block;
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 2.8vw, 1.4rem);
+  color: var(--soft-beige);
+  line-height: 2;
+  opacity: 0;
+  min-height: 2em;
+}
+
+.typewriter-line.typed {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px; height: 1.1em;
+  background: var(--gold);
+  vertical-align: middle;
+  margin-left: 3px;
+  animation: blink 0.9s step-end infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ============================================================
+   SECTION 3 — SORRY
+   ============================================================ */
+#s3 {
+  background: linear-gradient(180deg, rgba(26,15,10,0.6) 0%, rgba(46,26,14,0.5) 100%);
+}
+
+.sorry-body {
+  max-width: 560px;
+  text-align: center;
+  margin-top: 32px;
+}
+
+.sorry-body p {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  color: var(--soft-beige);
+  line-height: 2.1;
+  opacity: 0.85;
+  margin-bottom: 18px;
+}
+
+.sorry-body p strong {
+  color: var(--gold-light);
+  font-weight: 400;
+}
+
+/* ============================================================
+   SECTION 4 — YOU'LL ALWAYS BE DIFFERENT
+   ============================================================ */
+#s4 {}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,92,0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 32px 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1),
+              border-color 0.4s ease,
+              background 0.4s ease;
+}
+.card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,92,0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(201,168,92,0.45);
+  background: rgba(255,255,255,0.07);
+}
+.card:hover::before { opacity: 1; }
+
+.card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: var(--soft-beige);
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   SECTION 5 — THINGS SHE LOVES
+   ============================================================ */
+#s5 {
+  overflow: hidden;
+}
+
+.loves-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  max-width: 800px;
+  margin-top: 56px;
+}
+
+.love-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,92,0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 36px 32px;
+  width: 200px;
+  text-align: center;
+  position: relative;
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+.love-card:nth-child(2) { animation-delay: -1.5s; }
+.love-card:nth-child(3) { animation-delay: -3s; }
+.love-card:nth-child(4) { animation-delay: -4.5s; }
+.love-card:nth-child(5) { animation-delay: -2s; }
+
+@keyframes floatCard {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-10px); }
+}
+
+.love-emoji {
+  font-size: 2.4rem;
+  display: block;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 0 8px rgba(201,168,92,0.3));
+}
+
+.love-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.love-desc {
+  font-size: 0.88rem;
+  color: var(--soft-beige);
+  opacity: 0.7;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   SECTION 6 — LETTER
+   ============================================================ */
+#s6 {
+  background: linear-gradient(180deg, transparent 0%, rgba(30,18,10,0.6) 100%);
+}
+
+.letter-wrap {
+  max-width: 620px;
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,92,0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: clamp(36px, 6vw, 64px);
+  position: relative;
+}
+
+.letter-wrap::before {
+  content: '"';
+  position: absolute; top: -20px; left: 32px;
+  font-family: var(--font-display);
+  font-size: 7rem;
+  color: var(--gold);
+  opacity: 0.12;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.letter-header {
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+  margin-bottom: 28px;
+}
+
+.letter-body p {
+  font-size: clamp(0.95rem, 2.2vw, 1.08rem);
+  color: var(--soft-beige);
+  line-height: 2.1;
+  margin-bottom: 22px;
+  opacity: 0.88;
+}
+
+.letter-sign {
+  margin-top: 32px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+/* ============================================================
+   FINAL SECTION
+   ============================================================ */
+#s-final {
+  transition: background 2s ease;
+}
+
+#s-final.bright {
+  background: linear-gradient(180deg, rgba(201,168,92,0.08) 0%, rgba(255,245,220,0.05) 100%);
+}
+
+.final-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 400;
+  text-align: center;
+  color: var(--white);
+}
+
+.final-sub {
+  margin-top: 20px;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  color: var(--soft-beige);
+  opacity: 0.75;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+.bondu-msg {
+  display: none;
+  margin-top: 40px;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--gold-light);
+  text-align: center;
+  animation: fadeIn 1.2s forwards;
+}
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+.petal {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  font-size: 1.1rem;
+  animation: petalFall linear forwards;
+}
+
+@keyframes petalFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ============================================================
+   CAT
+   ============================================================ */
+#cat {
+  position: fixed;
+  bottom: 12px; left: -80px;
+  font-size: 2rem;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+  transition: none;
+  filter: drop-shadow(0 0 10px rgba(201,168,92,0.5));
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--dark-brown); }
+::-webkit-scrollbar-thumb { background: var(--gold); opacity: 0.5; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+  .cards-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .love-card { width: 150px; padding: 28px 20px; }
+  .letter-wrap { padding: 32px 24px; }
+}
+
+@media (max-width: 400px) {
+  .cards-grid { grid-template-columns: 1fr; }
+  .love-card { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- STAR / PARTICLE CANVAS -->
+<canvas id="canvas"></canvas>
+
+<div class="page-wrap">
+
+  <!-- ============================================================
+       SECTION 1 — HERO
+       ============================================================ -->
+  <section id="s1">
+    <p class="hero-eyebrow reveal">A message worth reading</p>
+    <h1 class="hero reveal reveal-delay-1"
+        style="animation: heroFadeIn 1.4s 0.3s cubic-bezier(.22,1,.36,1) both;">
+      For Eliza
+    </h1>
+    <p class="hero-sub">This is only for you.</p>
+    <div class="hero-btn-wrap">
+      <button class="btn" onclick="scrollToSection('s2')">
+        Click to continue
+      </button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 2 — TYPEWRITER
+       ============================================================ -->
+  <section id="s2">
+    <div class="label reveal">Before anything else</div>
+    <div class="gold-line reveal reveal-delay-1"></div>
+    <div class="typewriter-container">
+      <span class="typewriter-line" id="tw0"></span>
+      <span class="typewriter-line" id="tw1"></span>
+      <span class="typewriter-line" id="tw2"></span>
+      <span class="typewriter-line" id="tw3"></span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 3 — I'M SORRY
+       ============================================================ -->
+  <section id="s3">
+    <div class="label reveal">With honesty</div>
+    <h2 class="section-title reveal reveal-delay-1">I'm Sorry.</h2>
+    <div class="gold-line reveal reveal-delay-2"></div>
+    <div class="sorry-body">
+      <p class="reveal reveal-delay-2">
+        I wasn't trying to <strong>replace you</strong>.
+      </p>
+      <p class="reveal reveal-delay-3">
+        I wasn't choosing someone over you.
+      </p>
+      <p class="reveal reveal-delay-3">
+        I was simply worried because someone she gone quiet for a few days 
+        and that instinct to check in, <strong>it didn't come from a bad place</strong>.
+      </p>
+      <p class="reveal reveal-delay-4">
+        But I understand now. Seeing me put that kind of efforts into someone else
+         it made you feel overlooked. And that was never ever my intention.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 4 — YOU'LL ALWAYS BE DIFFERENT
+       ============================================================ -->
+  <section id="s4">
+    <div class="label reveal">Something I need you to know</div>
+    <h2 class="section-title reveal reveal-delay-1">You'll always be different.</h2>
+    <div class="gold-line reveal reveal-delay-2"></div>
+    <div class="cards-grid">
+
+      <div class="card reveal reveal-delay-2">
+        <span class="card-icon">✨</span>
+        <p>You matter to me in a way that isn't replaceable.</p>
+      </div>
+
+      <div class="card reveal reveal-delay-3">
+        <span class="card-icon">🫂</span>
+        <p>You're someone I genuinely care about.</p>
+      </div>
+
+      <div class="card reveal reveal-delay-2">
+        <span class="card-icon">🌿</span>
+        <p>I never want you to doubt your place in my life.</p>
+      </div>
+
+      <div class="card reveal reveal-delay-3">
+        <span class="card-icon">🙏</span>
+        <p>I'm honestly lucky to have you. That's not something I say lightly.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 5 — THINGS SHE LOVES
+       ============================================================ -->
+  <section id="s5">
+    <div class="label reveal">A little reminder — I see you</div>
+    <h2 class="section-title reveal reveal-delay-1">The things that make you, you.</h2>
+    <div class="gold-line reveal reveal-delay-2"></div>
+    <div class="loves-grid reveal reveal-delay-3">
+
+      <div class="love-card">
+        <span class="love-emoji">🌻</span>
+        <span class="love-label">Sunflowers</span>
+        <p class="love-desc">Warm, bright, unapologetically themselves.</p>
+      </div>
+
+      <div class="love-card">
+        <span class="love-emoji">🌇</span>
+        <span class="love-label">Sunsets</span>
+        <p class="love-desc">The quiet kind of beautiful that doesn't need an audience.</p>
+      </div>
+
+      <div class="love-card">
+        <span class="love-emoji">🐈</span>
+        <span class="love-label">Cats</span>
+        <p class="love-desc">Independent. Selective. Loyal to the ones they choose.</p>
+      </div>
+
+      <div class="love-card">
+        <span class="love-emoji">🍫</span>
+        <span class="love-label">Chocolate</span>
+        <p class="love-desc">A small thing that makes everything a little better.</p>
+      </div>
+
+      <div class="love-card">
+        <span class="love-emoji">🍝</span>
+        <span class="love-label">Spicy food</span>
+        <p class="love-desc">Bold taste. No apologies.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 6 — THE LETTER
+       ============================================================ -->
+  <section id="s6">
+    <div class="label reveal">From me to you</div>
+    <div class="gold-line reveal reveal-delay-1"></div>
+    <div class="letter-wrap reveal reveal-delay-2">
+      <div class="letter-header">A letter, written with care.</div>
+      <div class="letter-body">
+        <p>
+          I've been thinking about this (about you) more than you probably realize.
+          And I want you to know that I actually understand why you were hurt.
+          It wasn't dramatic. It wasn't an overreaction. It made sense.
+        </p>
+        <p>
+          When you care about someone and you see them pouring that same energy
+          somewhere else, it stings. Even when nothing is wrong, it still stings.
+          And I should have been more aware of that. I wasn't, and I'm sorry.
+        </p>
+        <p>
+          I never wanted you to feel less important. Not even for a second.
+          Because you're not less important,You're the most important
+          person in my life.
+        </p>
+        <p>
+          I don't want one misunderstanding to quietly build a wall between us.
+          That's not what this deserves. And I think we both know that.
+        </p>
+        <p>
+          Thank you for always being there. For being honest. For caring enough
+          to feel hurt in the first place because indifference would've been
+          so much worse.
+        </p>
+        <p>
+          I'm truly sorry, Eli. And I mean that without any condition attached to it.
+        </p>
+      </div>
+      <div class="letter-sign">— Its Me <3</div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FINAL SECTION
+       ============================================================ -->
+  <section id="s-final">
+    <h2 class="final-title reveal" id="final-thanks">Thank you for reading.</h2>
+    <p class="final-sub reveal reveal-delay-1" id="final-smile">
+      I hope you understand.
+    </p>
+    <div class="reveal reveal-delay-2" id="final-btn-wrap">
+      <button class="btn" id="restart-btn" onclick="triggerEnding()">
+        LYSM (click)
+      </button>
+    </div>
+    <div class="bondu-msg" id="bondu-msg">Thank you, elizaaaaa. 🌻(ik you find small sunflowers cute)</div>
+  </section>
+
+</div>
+
+<!-- CAT -->
+<div id="cat">🐈</div>
+
+<style>
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+
+<script>
+/* ============================================================
+   CANVAS — STARS + SOFT PARTICLES
+   ============================================================ */
+(function() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], particles = [];
+  let fadeStars = false, starOpacity = 1;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  /* Stars */
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 220; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.3 + 0.3,
+        o: Math.random() * 0.7 + 0.3,
+        speed: Math.random() * 0.4 + 0.05,
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  initStars();
+
+  /* Soft particles */
+  function initParticles() {
+    particles = [];
+    for (let i = 0; i < 35; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 3 + 1.5,
+        o: Math.random() * 0.12 + 0.03,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        hue: Math.random() > 0.5 ? 38 : 30 /* gold tones */
+      });
+    }
+  }
+  initParticles();
+
+  function loop(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    /* background gradient */
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, 'rgba(26,15,10,0)');
+    grad.addColorStop(1, 'rgba(46,26,14,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    /* fade control */
+    if (fadeStars && starOpacity > 0) {
+      starOpacity = Math.max(0, starOpacity - 0.004);
+    }
+
+    /* draw stars */
+    stars.forEach(s => {
+      s.twinkle += 0.015;
+      const twink = (Math.sin(s.twinkle) * 0.3 + 0.7);
+      s.y -= s.speed * 0.08;
+      if (s.y < 0) { s.y = H; s.x = Math.random() * W; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 245, 220, ${s.o * twink * starOpacity})`;
+      ctx.fill();
+    });
+
+    /* draw particles */
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue}, 65%, 68%, ${p.o * starOpacity})`;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  /* expose fade for ending */
+  window._fadeStars = function() { fadeStars = true; };
+})();
+
+/* ============================================================
+   SECTION SCROLL HELPER
+   ============================================================ */
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ============================================================
+   INTERSECTION OBSERVER — REVEAL ON SCROLL
+   ============================================================ */
+(function() {
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(el => io.observe(el));
+})();
+
+/* ============================================================
+   TYPEWRITER — SECTION 2
+   ============================================================ */
+(function() {
+  const lines = [
+    "Sometimes we hurt the people we care about without realizing it.",
+    "I didn't understand why you were upset at first.",
+    "After thinking about it...",
+    "I realized it wasn't about another person. It was about how my actions made you feel."
+  ];
+
+  const ids = ['tw0','tw1','tw2','tw3'];
+  let active = false;
+
+  const section = document.getElementById('s2');
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !active) {
+      active = true;
+      runTypewriter(0, 0);
+      io.disconnect();
+    }
+  }, { threshold: 0.4 });
+  io.observe(section);
+
+  function runTypewriter(lineIdx, charIdx) {
+    if (lineIdx >= lines.length) return;
+    const el = document.getElementById(ids[lineIdx]);
+    el.classList.add('typed');
+
+    const line = lines[lineIdx];
+    if (charIdx <= line.length) {
+      // remove old cursor from previous lines
+      document.querySelectorAll('.cursor').forEach(c => c.remove());
+
+      el.textContent = line.slice(0, charIdx);
+      const cur = document.createElement('span');
+      cur.className = 'cursor';
+      el.appendChild(cur);
+
+      const delay = charIdx === 0 ? 600 : 32 + Math.random() * 28;
+      setTimeout(() => runTypewriter(lineIdx, charIdx + 1), delay);
+    } else {
+      document.querySelectorAll('.cursor').forEach(c => c.remove());
+      setTimeout(() => runTypewriter(lineIdx + 1, 0), 650);
+    }
+  }
+})();
+
+/* ============================================================
+   FINAL SECTION — BRIGHTEN + STAR FADE
+   ============================================================ */
+(function() {
+  const finalSection = document.getElementById('s-final');
+  const io = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      finalSection.classList.add('bright');
+      window._fadeStars && window._fadeStars();
+      io.disconnect();
+    }
+  }, { threshold: 0.3 });
+  io.observe(finalSection);
+})();
+
+/* ============================================================
+   ENDING — CONFETTI + CAT + MESSAGE
+   ============================================================ */
+function triggerEnding() {
+  document.getElementById('restart-btn').style.display = 'none';
+
+  /* Confetti — sunflower petals */
+  const emojis = ['🌻','🌻','✨','🌻','🌻'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => spawnPetal(emojis[Math.floor(Math.random() * emojis.length)]), i * 55);
+  }
+
+  /* Cat walk */
+  setTimeout(walkCat, 800);
+
+  /* Message */
+  setTimeout(() => {
+    const msg = document.getElementById('bondu-msg');
+    msg.style.display = 'block';
+  }, 3200);
+}
+
+function spawnPetal(emoji) {
+  const el = document.createElement('div');
+  el.className = 'petal';
+  el.textContent = emoji;
+  el.style.left = Math.random() * 100 + 'vw';
+  el.style.top = '-30px';
+  el.style.fontSize = (0.9 + Math.random() * 0.8) + 'rem';
+  const dur = 2.5 + Math.random() * 2;
+  el.style.animationDuration = dur + 's';
+  el.style.animationDelay = '0s';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000 + 200);
+}
+
+function walkCat() {
+  const cat = document.getElementById('cat');
+  cat.style.display = 'block';
+  let x = -80;
+  const target = window.innerWidth + 80;
+  const speed = 2.8;
+
+  function step() {
+    x += speed;
+    cat.style.left = x + 'px';
+    // subtle bob
+    cat.style.bottom = (12 + Math.sin(x * 0.06) * 5) + 'px';
+    if (x < target) {
+      requestAnimationFrame(step);
+    } else {
+      cat.style.display = 'none';
+    }
+  }
+  requestAnimationFrame(step);
+}
+</script>
+
+</body>
+</html>
